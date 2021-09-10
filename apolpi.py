@@ -112,14 +112,16 @@ def doit():
         CACHED_RESULT = _fetch()
         CACHED_TIME = now
 
+    final_list = CACHED_RESULT
+
     # Optional filter by org
     organism = request.args.get('organism', None)
     if organism:
-        CACHED_RESULT = [x for x in CACHED_RESULT if str(x['id']) == organism or x['commonName'] == organism]
+        final_list = [x for x in final_list if str(x['id']) == organism or x['commonName'] == organism]
 
     # Optional filter by showPublicOnly
     showPublicOnly = request.args.get('showPublicOnly', None)
     if showPublicOnly:
-        CACHED_RESULT = [x for x in CACHED_RESULT if str(x['publicMode']).lower() == str(showPublicOnly).lower()]
+        final_list = [x for x in final_list if str(x['publicMode']).lower() == str(showPublicOnly).lower()]
 
-    return jsonify(CACHED_RESULT)
+    return jsonify(final_list)

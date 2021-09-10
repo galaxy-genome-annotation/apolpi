@@ -3,6 +3,7 @@ import time
 
 from flask import Flask
 from flask import jsonify
+from flask import request
 
 from flask_sqlalchemy import SQLAlchemy
 
@@ -110,5 +111,15 @@ def doit():
     if now - CACHED_TIME > 30:
         CACHED_RESULT = _fetch()
         CACHED_TIME = now
+
+    # Optional filter by org
+    organism = request.args.get('organism', None)
+    if organism:
+        CACHED_RESULT = [x for x in CACHED_RESULT if str(x['id']) == organism or x['commonName'] == organism]
+
+    # Optional filter by showPublicOnly
+    showPublicOnly = request.args.get('showPublicOnly', None)
+    if showPublicOnly:
+        CACHED_RESULT = [x for x in CACHED_RESULT if str(x['publicMode']) == str(showPublicOnly)]
 
     return jsonify(CACHED_RESULT)

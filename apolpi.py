@@ -120,6 +120,6 @@ def doit():
     # Optional filter by showPublicOnly
     showPublicOnly = request.args.get('showPublicOnly', None)
     if showPublicOnly:
-        CACHED_RESULT = [x for x in CACHED_RESULT if str(x['publicMode']) == str(showPublicOnly)]
+        CACHED_RESULT = [x for x in CACHED_RESULT if str(x['publicMode']).lower() == str(showPublicOnly).lower()]
 
     return jsonify(CACHED_RESULT)

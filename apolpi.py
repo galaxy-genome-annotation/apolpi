@@ -118,10 +118,18 @@ def doit():
     organism = request.args.get('organism', None)
     if organism:
         final_list = [x for x in final_list if str(x['id']) == organism or x['commonName'] == organism]
+    else:
+        organism = request.form.get('organism', None)
+        if organism:
+            final_list = [x for x in final_list if str(x['id']) == organism or x['commonName'] == organism]
 
     # Optional filter by showPublicOnly
     showPublicOnly = request.args.get('showPublicOnly', None)
     if showPublicOnly:
         final_list = [x for x in final_list if str(x['publicMode']).lower() == str(showPublicOnly).lower()]
+    else:
+        showPublicOnly = request.form.get('showPublicOnly', None)
+        if showPublicOnly:
+            final_list = [x for x in final_list if str(x['publicMode']).lower() == str(showPublicOnly).lower()]
 
     return jsonify(final_list)

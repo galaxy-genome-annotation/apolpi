@@ -114,12 +114,14 @@ def doit():
 
     final_list = CACHED_RESULT
 
+    req_json = request.get_json()
+
     # Optional filter by org
     organism = request.args.get('organism', None)
     if organism:
         final_list = [x for x in final_list if str(x['id']) == organism or x['commonName'] == organism]
-    else:
-        organism = request.form.get('organism', None)
+    elif req_json and 'organism' in req_json:
+        organism = req_json['organism']
         if organism:
             final_list = [x for x in final_list if str(x['id']) == organism or x['commonName'] == organism]
 
@@ -127,8 +129,8 @@ def doit():
     showPublicOnly = request.args.get('showPublicOnly', None)
     if showPublicOnly:
         final_list = [x for x in final_list if str(x['publicMode']).lower() == str(showPublicOnly).lower()]
-    else:
-        showPublicOnly = request.form.get('showPublicOnly', None)
+    elif req_json and 'showPublicOnly' in req_json:
+        showPublicOnly = req_json['showPublicOnly']
         if showPublicOnly:
             final_list = [x for x in final_list if str(x['publicMode']).lower() == str(showPublicOnly).lower()]
 

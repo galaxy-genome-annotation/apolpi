@@ -119,7 +119,7 @@ def doit():
 
     final_list = CACHED_RESULT
 
-    req_json = request.get_json()
+    req_json = request.get_json(silent=True)
 
     # Optional filter by org
     organism = request.args.get('organism', None)

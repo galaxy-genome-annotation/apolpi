@@ -17,6 +17,7 @@ COPY apolpi.py boot.sh ./
 RUN chmod +x boot.sh
 
 ENV FLASK_APP apolpi.py
+ENV TIMEOUT 30
 EXPOSE 80
 
 ENTRYPOINT ["/apolpi/boot.sh"]

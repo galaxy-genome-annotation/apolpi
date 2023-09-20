@@ -9,8 +9,10 @@ from flask_sqlalchemy import SQLAlchemy
 
 global CACHED_RESULT
 global CACHED_TIME
+global TIMEOUT
 CACHED_RESULT = None
 CACHED_TIME = 0
+TIMEOUT = int(os.environ.get('TIMEOUT', 30))
 
 app = Flask(__name__)
 
@@ -113,7 +115,7 @@ def doit():
     global CACHED_TIME
     global CACHED_RESULT
     now = time.time()
-    if now - CACHED_TIME > 30:
+    if now - CACHED_TIME > TIMEOUT:
         CACHED_RESULT = _fetch()
         CACHED_TIME = now
 

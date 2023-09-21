@@ -6,6 +6,7 @@ from flask import jsonify
 from flask import request
 
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 
 global CACHED_RESULT
 global CACHED_TIME
@@ -103,7 +104,7 @@ columns = [
 
 
 def _fetch():
-    roles = db.engine.execute(QUERY)
+    roles = db.session.execute(text(QUERY))
     out = []
     for role in roles:
         out.append(dict(zip(columns, role)))

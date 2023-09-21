@@ -103,12 +103,11 @@ columns = [
 
 
 def _fetch():
-    with db.engine.connect() as connection:
-        roles = connection.execute(QUERY)
-        out = []
-        for role in roles:
-            out.append(dict(zip(columns, role)))
-        return out
+    roles = db.engine.execute(QUERY)
+    out = []
+    for role in roles:
+        out.append(dict(zip(columns, role)))
+    return out
 
 
 @app.route("/organism/findAllOrganisms", methods=["GET", "POST"])

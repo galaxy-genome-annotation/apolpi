@@ -1,4 +1,5 @@
 import os
+import json
 import time
 
 from flask import Flask
@@ -97,11 +98,27 @@ GROUP BY
 
 INSERT = """
 INSERT INTO organism
-    (id, version, common_name, directory, genome_fasta, genome_fasta_index, genus, species, obsolete, public_mode)
+    (id, version, common_name, directory, genome_fasta, genome_fasta_index, genus, species, obsolete, public_mode, valid)
 VALUES
-    (:id, 2, :commonName, :directory, 'seq/genome.fasta', 'seq/genome.fasta.fai', :genus, :species, false, :publicMode);
+    (:id, 2, :commonName, :directory, 'seq/genome.fasta', 'seq/genome.fasta.fai', :genus, :species, false, :publicMode, true);
 """
 
+INSERT_PERMISSIONS = """
+INSERT INTO permission 
+	(id, organism_id, class, user_id, permissions, version)
+VALUES
+	(:permid, :id, 'org.bbop.apollo.UserOrganismPermission', 31, '["ADMINISTRATE"]', 1);
+"""
+
+INSERT_REFSEQ = """
+INSERT INTO sequence 
+    (id, version, sequence_end, length, name, organism_id, sequence_start)
+VALUES
+    (:refseqid, 0, :length, :length, :name, :id, 0);
+"""
+#    id    | version | sequence_end | length  |  name   | organism_id | seq_chunk_size | sequence_start 
+# ---------+---------+--------------+---------+---------+-------------+----------------+----------------
+#  5482965 |       0 |       230218 |  230218 | chrI    |     5482963 |                |              0
 
 columns = [
     "commonName", "blatdb", "metadata", "obsolete", "directory",
@@ -120,11 +137,26 @@ def _fetch():
 
 
 def _insert(var):
-    print(text(INSERT))
-    res = db.session.execute(text(INSERT), var)
-    print(res)
-    print(db.session.commit())
-    return res
+    # Need to get /data/dnb01/apollo/149296708/seq/refSeqs.json
+    refseqjson = os.path.join(var['directory'], 'seq', 'refSeqs.json')
+    with open(refseqjson, 'r') as handle:
+        refSeqs = json.load(handle)
+
+    # Wrap it all in a connection
+    with db.session.begin():
+        org_id = list(db.session.execute(text("select max(id) + 2 from organism")))[0][0]
+        var['id'] = org_id
+        db.session.execute(text(INSERT), var)
+
+        perm_id = list(db.session.execute(text("select max(id) + 2 from permission")))[0][0]
+        db.session.execute(text(INSERT_PERMISSIONS), {'permid': perm_id, 'id': org_id})
+
+        max_rowid = list(db.session.execute(text("select max(id) from sequence")))[0][0]
+        for i, rec in enumerate(refSeqs):
+            refVars = {'refseqid': max_rowid + 1 + i, 'length': rec['length'], 'name': rec['name'], 'id': org_id}
+            db.session.execute(text(INSERT_REFSEQ), refVars)
+
+    return True
 
 
 @app.route("/organism/findAllOrganisms", methods=["GET", "POST"])
@@ -188,9 +220,6 @@ def insert():
     # valid                         | t
     # official_gene_set_track       | 
     print(req_json)
-    # This is terrible.
-    req_json['id'] = -int(time.time())
-
-    for row in _insert(req_json):
-        print(row)
-    return jsonify({})
+    # This is intensely terrible.
+    print(_insert(req_json))
+    return doit()

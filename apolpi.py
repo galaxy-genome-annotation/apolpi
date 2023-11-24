@@ -120,7 +120,11 @@ def _fetch():
 
 
 def _insert(var):
-    return db.session.execute(text(INSERT), var)
+    print(text(INSERT))
+    res = db.session.execute(text(INSERT), var)
+    print(res)
+    print(db.session.commit())
+    return res
 
 
 @app.route("/organism/findAllOrganisms", methods=["GET", "POST"])
@@ -187,5 +191,6 @@ def insert():
     # This is terrible.
     req_json['id'] = -int(time.time())
 
-    print(_insert(req_json))
+    for row in _insert(req_json):
+        print(row)
     return jsonify({})

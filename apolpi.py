@@ -97,7 +97,7 @@ GROUP BY
 
 INSERT = """
 INSERT INTO organism
-    (id, version, common_name, directory, genome_fasta, genome_fasta_index, genus, species, obsolete, publicMode)
+    (id, version, common_name, directory, genome_fasta, genome_fasta_index, genus, species, obsolete, public_mode)
 VALUES
     (:id, 2, :commonName, :directory, 'seq/genome.fasta', 'seq/genome.fasta.fai', :genus, :species, false, :publicMode);
 """

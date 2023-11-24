@@ -1,5 +1,5 @@
-import os
 import json
+import os
 import time
 
 from flask import Flask
@@ -104,19 +104,19 @@ VALUES
 """
 
 INSERT_PERMISSIONS = """
-INSERT INTO permission 
-	(id, organism_id, class, user_id, permissions, version)
+INSERT INTO permission
+    (id, organism_id, class, user_id, permissions, version)
 VALUES
-	(:permid, :id, 'org.bbop.apollo.UserOrganismPermission', 31, '["ADMINISTRATE"]', 1);
+    (:permid, :id, 'org.bbop.apollo.UserOrganismPermission', 31, '["ADMINISTRATE"]', 1);
 """
 
 INSERT_REFSEQ = """
-INSERT INTO sequence 
+INSERT INTO sequence
     (id, version, sequence_end, length, name, organism_id, sequence_start)
 VALUES
     (:refseqid, 0, :length, :length, :name, :id, 0);
 """
-#    id    | version | sequence_end | length  |  name   | organism_id | seq_chunk_size | sequence_start 
+#    id    | version | sequence_end | length  |  name   | organism_id | seq_chunk_size | sequence_start
 # ---------+---------+--------------+---------+---------+-------------+----------------+----------------
 #  5482965 |       0 |       230218 |  230218 | chrI    |     5482963 |                |              0
 
@@ -203,22 +203,22 @@ def insert():
     # -[ RECORD 1 ]-----------------+-----------------------------
     # id                            | 5483083
     # version                       | 2
-    # abbreviation                  | 
-    # blatdb                        | 
-    # comment                       | 
+    # abbreviation                  |
+    # blatdb                        |
+    # comment                       |
     # common_name                   | sacCer1 (gx654)
-    # data_added_via_web_services   | 
+    # data_added_via_web_services   |
     # directory                     | /data/dnb01/apollo/149296708
     # genome_fasta                  | seq/genome.fasta
     # genome_fasta_index            | seq/genome.fasta.fai
     # genus                         | S
     # metadata                      | {"creator":"31"}
-    # non_default_translation_table | 
+    # non_default_translation_table |
     # obsolete                      | f
     # public_mode                   | f
     # species                       | cerevisiae
     # valid                         | t
-    # official_gene_set_track       | 
+    # official_gene_set_track       |
     print(req_json)
     # This is intensely terrible.
     print(_insert(req_json))

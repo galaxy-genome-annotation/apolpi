@@ -95,6 +95,14 @@ GROUP BY
     ;
 """
 
+INSERT = """
+INSERT INTO organism
+    (id, version, common_name, directory, genome_fasta, genome_fasta_index, genus, species, obsolete, publicMode)
+VALUES
+    (:id, 2, :commonName, :directory, 'seq/genome.fasta', 'seq/genome.fasta.fai', :genus, :species, false, :publicMode);
+"""
+
+
 columns = [
     "commonName", "blatdb", "metadata", "obsolete", "directory",
     "publicMode", "valid", "genomeFastaIndex", "genus", "species", "id",
@@ -109,6 +117,10 @@ def _fetch():
     for role in roles:
         out.append(dict(zip(columns, role)))
     return out
+
+
+def _insert(var):
+    return db.session.execute(text(INSERT), var)
 
 
 @app.route("/organism/findAllOrganisms", methods=["GET", "POST"])
@@ -143,3 +155,37 @@ def doit():
             final_list = [x for x in final_list if str(x['publicMode']).lower() == str(showPublicOnly).lower()]
 
     return jsonify(final_list)
+
+
+@app.route("/organism/addOrganism", methods=["POST"])
+def insert():
+    req_json = dict(request.json)
+    # '{"commonName": "sacCer1 (gx654)",
+    #   "directory": "/data/dnb01/apollo/149296708",
+    #    "publicMode": false, "genus": "S", "species": "cerevisiae",
+    #    "username": "XXXXXXXXX", "password": "XXXXXXXXX"}'
+    # -[ RECORD 1 ]-----------------+-----------------------------
+    # id                            | 5483083
+    # version                       | 2
+    # abbreviation                  | 
+    # blatdb                        | 
+    # comment                       | 
+    # common_name                   | sacCer1 (gx654)
+    # data_added_via_web_services   | 
+    # directory                     | /data/dnb01/apollo/149296708
+    # genome_fasta                  | seq/genome.fasta
+    # genome_fasta_index            | seq/genome.fasta.fai
+    # genus                         | S
+    # metadata                      | {"creator":"31"}
+    # non_default_translation_table | 
+    # obsolete                      | f
+    # public_mode                   | f
+    # species                       | cerevisiae
+    # valid                         | t
+    # official_gene_set_track       | 
+    print(req_json)
+    # This is terrible.
+    req_json['id'] = -int(time.time())
+
+    print(_insert(req_json))
+    return jsonify({})

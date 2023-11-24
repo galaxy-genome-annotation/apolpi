@@ -1,3 +1,4 @@
+import json
 import os
 import time
 
@@ -95,6 +96,30 @@ GROUP BY
     ;
 """
 
+INSERT = """
+INSERT INTO organism
+    (id, version, common_name, directory, genome_fasta, genome_fasta_index, genus, species, obsolete, public_mode, valid)
+VALUES
+    (:id, 2, :commonName, :directory, 'seq/genome.fasta', 'seq/genome.fasta.fai', :genus, :species, false, :publicMode, true);
+"""
+
+INSERT_PERMISSIONS = """
+INSERT INTO permission
+    (id, organism_id, class, user_id, permissions, version)
+VALUES
+    (:permid, :id, 'org.bbop.apollo.UserOrganismPermission', 31, '["ADMINISTRATE"]', 1);
+"""
+
+INSERT_REFSEQ = """
+INSERT INTO sequence
+    (id, version, sequence_end, length, name, organism_id, sequence_start)
+VALUES
+    (:refseqid, 0, :length, :length, :name, :id, 0);
+"""
+#    id    | version | sequence_end | length  |  name   | organism_id | seq_chunk_size | sequence_start
+# ---------+---------+--------------+---------+---------+-------------+----------------+----------------
+#  5482965 |       0 |       230218 |  230218 | chrI    |     5482963 |                |              0
+
 columns = [
     "commonName", "blatdb", "metadata", "obsolete", "directory",
     "publicMode", "valid", "genomeFastaIndex", "genus", "species", "id",
@@ -109,6 +134,29 @@ def _fetch():
     for role in roles:
         out.append(dict(zip(columns, role)))
     return out
+
+
+def _insert(var):
+    # Need to get /data/dnb01/apollo/149296708/seq/refSeqs.json
+    refseqjson = os.path.join(var['directory'], 'seq', 'refSeqs.json')
+    with open(refseqjson, 'r') as handle:
+        refSeqs = json.load(handle)
+
+    # Wrap it all in a connection
+    with db.session.begin():
+        org_id = list(db.session.execute(text("select max(id) + 2 from organism")))[0][0]
+        var['id'] = org_id
+        db.session.execute(text(INSERT), var)
+
+        perm_id = list(db.session.execute(text("select max(id) + 2 from permission")))[0][0]
+        db.session.execute(text(INSERT_PERMISSIONS), {'permid': perm_id, 'id': org_id})
+
+        max_rowid = list(db.session.execute(text("select max(id) from sequence")))[0][0]
+        for i, rec in enumerate(refSeqs):
+            refVars = {'refseqid': max_rowid + 1 + i, 'length': rec['length'], 'name': rec['name'], 'id': org_id}
+            db.session.execute(text(INSERT_REFSEQ), refVars)
+
+    return True
 
 
 @app.route("/organism/findAllOrganisms", methods=["GET", "POST"])
@@ -143,3 +191,35 @@ def doit():
             final_list = [x for x in final_list if str(x['publicMode']).lower() == str(showPublicOnly).lower()]
 
     return jsonify(final_list)
+
+
+@app.route("/organism/addOrganism", methods=["POST"])
+def insert():
+    req_json = dict(request.json)
+    # '{"commonName": "sacCer1 (gx654)",
+    #   "directory": "/data/dnb01/apollo/149296708",
+    #    "publicMode": false, "genus": "S", "species": "cerevisiae",
+    #    "username": "XXXXXXXXX", "password": "XXXXXXXXX"}'
+    # -[ RECORD 1 ]-----------------+-----------------------------
+    # id                            | 5483083
+    # version                       | 2
+    # abbreviation                  |
+    # blatdb                        |
+    # comment                       |
+    # common_name                   | sacCer1 (gx654)
+    # data_added_via_web_services   |
+    # directory                     | /data/dnb01/apollo/149296708
+    # genome_fasta                  | seq/genome.fasta
+    # genome_fasta_index            | seq/genome.fasta.fai
+    # genus                         | S
+    # metadata                      | {"creator":"31"}
+    # non_default_translation_table |
+    # obsolete                      | f
+    # public_mode                   | f
+    # species                       | cerevisiae
+    # valid                         | t
+    # official_gene_set_track       |
+    print(req_json)
+    # This is intensely terrible.
+    print(_insert(req_json))
+    return doit()
